@@ -18,6 +18,8 @@ export default class Game extends Phaser.Scene {
     this.load.spritesheet("dude", "./public/assets/dude.png", {
       frameWidth: 32,
       frameHeight: 48,
+      margin: 0,
+      spacing: 0,
     });
   }
 
@@ -44,7 +46,7 @@ export default class Game extends Phaser.Scene {
 
     this.player.setCollideWorldBounds(true);
     this.player.body.setSize(20, 20);
-    this.player.body.setOffset(6, 28);
+    this.player.body.setOffset(6, 14);
 
     this.anims.create({
       key: "left",
@@ -62,6 +64,20 @@ export default class Game extends Phaser.Scene {
     this.anims.create({
       key: "right",
       frames: this.anims.generateFrameNumbers("dude", { start: 5, end: 8 }),
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    this.anims.create({
+      key: "up",
+      frames: this.anims.generateFrameNumbers("dude", { start: 9, end: 12 }),
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    this.anims.create({
+      key: "down",
+      frames: this.anims.generateFrameNumbers("dude", { start: 18, end: 21 }),
       frameRate: 10,
       repeat: -1,
     });
@@ -153,11 +169,16 @@ export default class Game extends Phaser.Scene {
 
     if (this.cursors.up.isDown) {
       this.player.setVelocityY(-160);
+      this.player.anims.play("up", true);
     } else if (this.cursors.down.isDown) {
       this.player.setVelocityY(160);
+      this.player.anims.play("down", true);
     }
 
-    if (this.player.body.velocity.x === 0 && this.player.body.velocity.y === 0) {
+    if (
+      this.player.body.velocity.x === 0 &&
+      this.player.body.velocity.y === 0
+    ) {
       this.player.anims.play("turn");
     }
 
@@ -172,12 +193,6 @@ export default class Game extends Phaser.Scene {
 
     this.score += 10;
     this.scoreText.setText(`Score: ${this.score}`);
-
-    if (this.stars.countActive(true) === 0) {
-      this.stars.children.iterate(function (child) {
-        child.enableBody(true, child.x, 0, true, true);
-      });
-    }
   }
 
   reachFinish() {
