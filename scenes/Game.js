@@ -13,6 +13,7 @@ export default class Game extends Phaser.Scene {
     this.load.tilemapTiledJSON("map", "public/assets/tilemap/map.json");
     this.load.image("tileset", "public/assets/texture.png");
     this.load.image("star", "public/assets/star.png");
+    this.load.image("bomb", "public/assets/bomb.png");
 
     this.load.spritesheet("dude", "./public/assets/dude.png", {
       frameWidth: 32,
@@ -41,8 +42,9 @@ export default class Game extends Phaser.Scene {
 
     this.player = this.physics.add.sprite(spawnPoint.x, spawnPoint.y, "dude");
 
-    this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
+    this.player.body.setSize(20, 20);
+    this.player.body.setOffset(6, 28);
 
     this.anims.create({
       key: "left",
@@ -85,21 +87,23 @@ export default class Game extends Phaser.Scene {
 
     // find object layer
     // if type is "stars", add to stars group
+    this.finish = null;
+
     objectsLayer.objects.forEach((objData) => {
       console.log(objData);
       const { x = 0, y = 0, name, type } = objData;
       switch (type) {
         case "star": {
-          // add star to scene
-          // console.log("estrella agregada: ", x, y);
           const star = this.stars.create(x, y, "star");
-          star.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+          break;
+        }
+        case "finish": {
+          this.finish = this.physics.add.sprite(x, y, "bomb");
           break;
         }
       }
     });
 
-    // add collision between player and stars
     this.physics.add.collider(
       this.player,
       this.stars,
@@ -107,33 +111,54 @@ export default class Game extends Phaser.Scene {
       null,
       this
     );
-    // add overlap between stars and platform layer
     this.physics.add.collider(this.stars, platformLayer);
+
+    if (this.finish) {
+      this.physics.add.overlap(
+        this.player,
+        this.finish,
+        this.reachFinish,
+        null,
+        this
+      );
+    }
 
     this.scoreText = this.add.text(16, 16, `Score: ${this.score}`, {
       fontSize: "32px",
       fill: "#000",
     });
+
+    this.winText = this.add
+      .text(360, 360, "", {
+        fontSize: "48px",
+        fill: "#fff",
+        fontStyle: "bold",
+        stroke: "#000",
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setDepth(10);
   }
 
   update() {
-    // update game objects
+    this.player.setVelocity(0);
+
     if (this.cursors.left.isDown) {
       this.player.setVelocityX(-160);
-
       this.player.anims.play("left", true);
     } else if (this.cursors.right.isDown) {
       this.player.setVelocityX(160);
-
       this.player.anims.play("right", true);
-    } else {
-      this.player.setVelocityX(0);
-
-      this.player.anims.play("turn");
     }
 
     if (this.cursors.up.isDown) {
-      this.player.setVelocityY(-330);
+      this.player.setVelocityY(-160);
+    } else if (this.cursors.down.isDown) {
+      this.player.setVelocityY(160);
+    }
+
+    if (this.player.body.velocity.x === 0 && this.player.body.velocity.y === 0) {
+      this.player.anims.play("turn");
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keyR)) {
@@ -149,10 +174,18 @@ export default class Game extends Phaser.Scene {
     this.scoreText.setText(`Score: ${this.score}`);
 
     if (this.stars.countActive(true) === 0) {
-      //  A new batch of stars to collect
       this.stars.children.iterate(function (child) {
         child.enableBody(true, child.x, 0, true, true);
       });
+    }
+  }
+
+  reachFinish() {
+    if (this.score >= 50) {
+      this.winText.setText("¡Ganaste!");
+      this.physics.pause();
+    } else {
+      this.winText.setText(`Te faltan ${5 - this.score / 10} estrellas`);
     }
   }
 }
