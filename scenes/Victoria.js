@@ -1,4 +1,6 @@
-// Escena final: muestra el puntaje acumulado en los tres niveles
+import { crearBoton } from "./Boton.js";
+
+// Escena de victoria: el explorador salió de la mazmorra con los tesoros
 export default class Victoria extends Phaser.Scene {
   constructor() {
     super("victoria");
@@ -10,21 +12,29 @@ export default class Victoria extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
-    this.cameras.main.setBackgroundColor("#1b4332");
+    this.cameras.main.setBackgroundColor("#2a2733");
 
     const titulo = this.add
-      .text(width / 2, height / 2 - 90, "¡GANASTE!", {
+      .text(width / 2, height / 2 - 140, "¡GANASTE!", {
         fontFamily: "monospace",
         fontSize: "64px",
         color: "#ffd166",
-        stroke: "#081c15",
+        stroke: "#16141c",
         strokeThickness: 8,
       })
       .setOrigin(0.5);
     this.tweens.add({ targets: titulo, scale: 1.08, duration: 600, yoyo: true, repeat: -1 });
 
     this.add
-      .text(width / 2, height / 2 + 10, `Puntaje total: ${this.puntaje}`, {
+      .text(width / 2, height / 2 - 70, "El explorador salió de la mazmorra con sus tesoros", {
+        fontFamily: "monospace",
+        fontSize: "17px",
+        color: "#e8e4f0",
+      })
+      .setOrigin(0.5);
+
+    this.add
+      .text(width / 2, height / 2 - 10, `Puntaje total: ${this.puntaje}`, {
         fontFamily: "monospace",
         fontSize: "32px",
         color: "#ffffff",
@@ -33,20 +43,15 @@ export default class Victoria extends Phaser.Scene {
 
     // Estrellas girando a los costados del título
     [-230, 230].forEach((dx) => {
-      const estrella = this.add.image(width / 2 + dx, height / 2 - 90, "star").setScale(2.5);
+      const estrella = this.add.image(width / 2 + dx, height / 2 - 140, "star").setScale(2.5);
       this.tweens.add({ targets: estrella, angle: 360, duration: 3000, repeat: -1 });
     });
+
     // El personaje festeja
-    this.add.sprite(width / 2, height / 2 + 190, "dude", 4).setScale(2);
+    this.add.sprite(width / 2, height / 2 + 75, "dude", 4).setScale(2);
 
-    this.add
-      .text(width / 2, height / 2 + 100, "Presioná ESPACIO para jugar de nuevo", {
-        fontFamily: "monospace",
-        fontSize: "20px",
-        color: "#95d5b2",
-      })
-      .setOrigin(0.5);
-
-    this.input.keyboard.once("keydown-SPACE", () => this.scene.start("nivel1", { puntaje: 0 }));
+    const reiniciar = () => this.scene.start("menu");
+    crearBoton(this, width / 2, height / 2 + 175, "Volver a jugar", reiniciar);
+    this.input.keyboard.once("keydown-ENTER", reiniciar);
   }
 }

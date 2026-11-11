@@ -15,7 +15,7 @@ export default class Preload extends Phaser.Scene {
 
   preload() {
     this.add
-      .text(400, 300, "Cargando...", { fontSize: "24px", color: "#1b4332" })
+      .text(400, 300, "Cargando...", { fontSize: "24px", color: "#ffd166" })
       .setOrigin(0.5);
 
     // Mapas hechos en Tiled
@@ -23,7 +23,7 @@ export default class Preload extends Phaser.Scene {
     this.load.tilemapTiledJSON("nivel2", "public/assets/tilemap/nivel2.json");
     this.load.tilemapTiledJSON("nivel3", "public/assets/tilemap/nivel3.json");
 
-    // El mismo PNG se usa como tileset del mapa y como spritesheet (bandera de llegada)
+    // El mismo PNG se usa como tileset del mapa y como spritesheet (puerta de llegada y candado)
     this.load.image("tiles", "public/assets/tilemap_packed.png");
     this.load.spritesheet("objetos", "public/assets/tilemap_packed.png", {
       frameWidth: 18,
@@ -71,13 +71,7 @@ export default class Preload extends Phaser.Scene {
         repeat: -1,
       });
     });
-    this.anims.create({
-      key: "bandera",
-      frames: this.anims.generateFrameNumbers("objetos", { frames: [111, 112] }),
-      frameRate: 4,
-      repeat: -1,
-    });
 
-    this.scene.start("nivel1", { puntaje: 0 });
+    this.scene.start("menu");
   }
 }

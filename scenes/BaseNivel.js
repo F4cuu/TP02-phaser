@@ -72,11 +72,15 @@ export default class BaseNivel extends Phaser.Scene {
     this.totalEstrellas = this.estrellas.getLength();
     this.physics.add.overlap(this.jugador, this.estrellas, this.juntarEstrella, null, this);
 
-    // ---------- PUNTO DE LLEGADA ----------
+    // ---------- PUNTO DE LLEGADA (puerta) ----------
+    // La puerta ocupa 2 tiles de alto: parte de arriba (130) y de abajo (150) del tileset
     const datosLlegada = objetos.find((o) => o.name === "llegada");
-    this.llegada = this.physics.add.staticSprite(datosLlegada.x, datosLlegada.y, "objetos", 111);
-    this.llegada.setScale(1.5).refreshBody();
-    this.llegada.play("bandera");
+    this.puertaArriba = this.add.image(datosLlegada.x, datosLlegada.y - 9, "objetos", 130);
+    this.llegada = this.physics.add.staticSprite(datosLlegada.x, datosLlegada.y + 9, "objetos", 150);
+    // Candado mientras no se junten los ítems necesarios
+    this.candado = this.add.image(datosLlegada.x, datosLlegada.y - 24, "objetos", 28).setScale(0.7);
+    this.puertaArriba.setTint(0x8a8a9a);
+    this.llegada.setTint(0x8a8a9a);
     this.physics.add.overlap(this.jugador, this.llegada, this.tocarLlegada, null, this);
 
     // ---------- ENEMIGOS (aliens) ----------
@@ -152,16 +156,18 @@ export default class BaseNivel extends Phaser.Scene {
   crearHud() {
     const estilo = { fontFamily: "monospace", fontSize: "18px", color: "#ffffff" };
     this.add
-      .rectangle(0, 0, this.scale.width, ALTO_HUD, 0x1b4332, 0.9)
+      .rectangle(0, 0, this.scale.width, ALTO_HUD, 0x16141c, 0.92)
       .setOrigin(0)
       .setScrollFactor(0) // queda fijo aunque la cámara se mueva
       .setDepth(20);
+    // Contador de ítems en la esquina superior izquierda (GDD 6.1)
+    this.add.image(22, 20, "star").setScrollFactor(0).setDepth(21);
+    this.textoEstrellas = this.add.text(40, 11, "", estilo).setScrollFactor(0).setDepth(21);
     this.add
-      .text(12, 11, this.opciones.titulo, { ...estilo, color: "#ffd166" })
+      .text(this.scale.width / 2, 11, this.opciones.titulo, { ...estilo, color: "#ffd166" })
+      .setOrigin(0.5, 0)
       .setScrollFactor(0)
       .setDepth(21);
-    this.add.image(176, 20, "star").setScrollFactor(0).setDepth(21);
-    this.textoEstrellas = this.add.text(194, 11, "", estilo).setScrollFactor(0).setDepth(21);
     this.textoPuntaje = this.add
       .text(this.scale.width - 12, 11, "", estilo)
       .setOrigin(1, 0)
@@ -175,7 +181,7 @@ export default class BaseNivel extends Phaser.Scene {
     this.textoEstrellas.setText(
       `${this.recolectadas}/${this.totalEstrellas}  (mín. ${ESTRELLAS_MINIMAS})`
     );
-    this.textoEstrellas.setColor(ok ? "#95d5b2" : "#ffffff");
+    this.textoEstrellas.setColor(ok ? "#9be7a0" : "#ffffff");
     this.textoPuntaje.setText(`Puntaje: ${this.puntaje}`);
   }
 
@@ -187,7 +193,7 @@ export default class BaseNivel extends Phaser.Scene {
         fontFamily: "monospace",
         fontSize: "32px",
         color: "#ffffff",
-        stroke: "#1b4332",
+        stroke: "#16141c",
         strokeThickness: 6,
         align: "center",
       })
@@ -209,20 +215,35 @@ export default class BaseNivel extends Phaser.Scene {
     this.puntaje += PUNTOS_POR_ESTRELLA;
     this.actualizarHud();
     if (this.recolectadas === ESTRELLAS_MINIMAS) {
-      this.mostrarCartel("¡Ya podés ir a la bandera!", 1500);
+      this.abrirPuerta();
     }
   }
 
-  // Condición para ganar: tocar la llegada habiendo juntado al menos 5 estrellas
+  // Al juntar los ítems necesarios la puerta se destraba
+  abrirPuerta() {
+    this.candado.destroy();
+    this.puertaArriba.clearTint();
+    this.llegada.clearTint();
+    this.tweens.add({
+      targets: [this.puertaArriba, this.llegada],
+      alpha: 0.6,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+    });
+    this.mostrarCartel("¡La puerta se abrió!", 1500);
+  }
+
+  // Condición para ganar: tocar la puerta habiendo juntado al menos 5 ítems
   tocarLlegada() {
     if (this.terminado) return;
 
     if (this.recolectadas < ESTRELLAS_MINIMAS) {
-      // Avisar sin repetir el cartel en cada frame que se está tocando la bandera
+      // Avisar sin repetir el cartel en cada frame que se está tocando la puerta
       if (!this.avisoActivo) {
         this.avisoActivo = true;
         const faltan = ESTRELLAS_MINIMAS - this.recolectadas;
-        this.mostrarCartel(`Te faltan ${faltan} estrella${faltan === 1 ? "" : "s"}`, 1200);
+        this.mostrarCartel(`La puerta está cerrada.\nTe faltan ${faltan} ítem${faltan === 1 ? "" : "s"}`, 1200);
         this.time.delayedCall(1500, () => (this.avisoActivo = false));
       }
       return;
@@ -232,7 +253,7 @@ export default class BaseNivel extends Phaser.Scene {
     this.physics.pause();
     this.jugador.anims.play("turn");
     const final = this.opciones.siguiente === "victoria";
-    this.mostrarCartel(final ? "¡Llegaste!" : "¡Nivel completado!", 0);
+    this.mostrarCartel(final ? "¡Saliste de la mazmorra!" : "¡Nivel completado!", 0);
     // Pasar al siguiente nivel llevando el puntaje acumulado
     this.time.delayedCall(1300, () =>
       this.scene.start(this.opciones.siguiente, { puntaje: this.puntaje })

@@ -1,4 +1,5 @@
 import Preload from "./scenes/Preload.js";
+import Menu from "./scenes/Menu.js";
 import Nivel1 from "./scenes/Nivel1.js";
 import Nivel2 from "./scenes/Nivel2.js";
 import Nivel3 from "./scenes/Nivel3.js";
@@ -10,7 +11,7 @@ const config = {
   width: 800,
   height: 600,
   pixelArt: true, // evita que el pixel art se vea borroso al escalar
-  backgroundColor: "#c7e9b0",
+  backgroundColor: "#2a2733",
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -23,7 +24,7 @@ const config = {
     },
   },
   // La primera escena de la lista es la que arranca
-  scene: [Preload, Nivel1, Nivel2, Nivel3, Victoria],
+  scene: [Preload, Menu, Nivel1, Nivel2, Nivel3, Victoria],
 };
 
 window.game = new Phaser.Game(config);
